@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path'); // Import the 'path' module
 
 // Function to handle file read operations
 function readFile(filePath) {
@@ -34,7 +35,9 @@ function deleteFile(filePath) {
 }
 
 // Example usage:
-const filePath = 'week1.txt';
+const fileName = 'week1.txt'; // Rename this variable for clarity
+const filePath = path.join(__dirname, fileName); // Construct the full file path
+
 const data = 'bhumi';
 
 // Read the file
@@ -45,3 +48,4 @@ writeFile(filePath, data);
 
 // Delete the file
 deleteFile(filePath);
+
