@@ -12,7 +12,17 @@ app.use(express.json());
 // Define the path to the user data file
 const userDataFilePath = path.join(__dirname, 'users.json');
 
-// Endpoint to retrieve user data (GET)
+// Middleware to log requests
+app.use((req, res, next) => {
+  console.log(`${req.method} request for ${req.url}`);
+  next();
+});
+
+// Define routes and handlers
+app.get('/', (req, res) => {
+  res.send(`<button><a href="/api/v1/users">Users</a></button>`);
+});
+
 app.get('/api/v1/users', (req, res) => {
   readFile(userDataFilePath, (err, data) => {
     if (err) {
@@ -23,7 +33,6 @@ app.get('/api/v1/users', (req, res) => {
   });
 });
 
-// Endpoint to create a new user (POST)
 app.post('/api/v1/users', (req, res) => {
   const newUser = req.body;
 
@@ -36,7 +45,6 @@ app.post('/api/v1/users', (req, res) => {
   });
 });
 
-// Endpoint to delete user data (DELETE)
 app.delete('/api/v1/users', (req, res) => {
   deleteFile(userDataFilePath, (err) => {
     if (err) {
@@ -52,6 +60,7 @@ app.use((req, res) => {
   res.status(404).send('Not Found');
 });
 
+// Start the server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
