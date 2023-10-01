@@ -1,59 +1,65 @@
-const http = require('http');
-const fs = require('fs');
+const express = require('express');
+const fs = require('fs').promises; // Using fs.promises for Promise-based file operations
 const path = require('path');
+const { readFile, writeFile, deleteFile } = require('./fileoperations'); // Assuming fileoperations.js contains promise-based file operations
 
-// Importing file operation functions from fileOperations.js
-const { readFile, writeFile, deleteFile } = require('./fileoperations');
+const app = express();
+const port = 3000;
 
-// Creating an HTTP server
-const server = http.createServer((req, res) => {
-  if (req.method === 'GET' && req.url === '/api/v1/users') {
-    // Read user data from a file using fs and path modules
-    fs.readFile(path.join(__dirname, 'users.json'), 'utf8', (err, data) => {
-      if (err) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Internal Server Error');
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(data);
-    });
-  } else if (req.method === 'POST' && req.url === '/api/v1/users') {
-    // Handleing and creating a new user 
-    let body = '';
+// Middleware to parse JSON request bodies
+app.use(express.json());
 
-    req.on('data', (chunk) => {
-      body += chunk;
-    });
+// Define the path to the user data file
+const userDataFilePath = path.join(__dirname, 'users.json');
 
-    req.on('end', () => {
-      // Parseing the JSON data
-      try {
-        const newUser = JSON.parse(body);
+// Middleware to log requests
+app.use((req, res, next) => {
+  console.log(`${req.method} request for ${req.url}`);
+  next();
+});
 
-        // Write the new user data to the JSON file
-        writeFile(path.join(__dirname, 'users.json'), newUser);
+// Define routes and handlers using Async/Await and Promises
+app.get('/', async (req, res) => {
+  res.send(`<button><a href="/api/v1/users">Users</a></button>`);
+});
 
-        res.writeHead(201, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(newUser));
-      } catch (err) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('Bad Request');
-      }
-    });
-  } else if (req.method === 'DELETE' && req.url === '/api/v1/users') {
-    // Handling deleting the user data file
-    deleteFile(path.join(__dirname, 'users.json'));
-
-    res.writeHead(204);
-    res.end();
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found');
+app.get('/api/v1/users', async (req, res) => {
+  try {
+    const data = await readFile(userDataFilePath);
+    res.status(200).json(JSON.parse(data));
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
-// Starting the server on port 3000
-server.listen(3000, () => {
-  console.log('Server running on <http://localhost:3000/>');
+app.post('/api/v1/users', async (req, res) => {
+  const newUser = req.body;
+  try {
+    await writeFile(userDataFilePath, JSON.stringify(newUser));
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.delete('/api/v1/users', async (req, res) => {
+  try {
+    await deleteFile(userDataFilePath);
+    res.status(204).end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// Handle unsupported routes
+app.use((req, res) => {
+  res.status(404).send('Not Found');
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });
