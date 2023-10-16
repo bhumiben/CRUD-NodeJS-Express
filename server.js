@@ -29,7 +29,7 @@ app.get('/api/v1/users', async (req, res) => {
     res.status(200).json(JSON.parse(data));
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).json({ error:'Internal Server Error'});
   }
 });
 
