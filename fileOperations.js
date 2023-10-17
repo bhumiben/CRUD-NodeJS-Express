@@ -2,10 +2,10 @@ const fs = require('fs');
 
 // Function to handle file read operations
 function readFile(filePath, callback) {
-  fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) {
-      console.error('Error reading the file:', err);
-      return callback(err, null);
+  fs.readFile(filePath, 'utf8', (error, data) => {
+    if (error) {
+      console.error('Error reading the file:', error);
+      return callback(error, null);
     }
     callback(null, data);
   });
