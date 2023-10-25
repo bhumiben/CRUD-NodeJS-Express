@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import axios from 'axios';
  
 // Functional component
-const App = () => {
+export const App = () => {
   const [users, setUsers] = useState([]); // State for users
  
   // Fetch users from API
@@ -29,21 +29,6 @@ const App = () => {
       });
   };
  
-  return (
-    <div>
-      <h1>User List</h1>
-      <button onClick={handleRefresh}>Refresh</button>
-      <ul>
-        {users && users.length > 0 ? (
-          users.map(user => (
-            <li key={user.id}>{user.name}</li>
-          ))
-        ) : (
-          <li>No users available</li>
-        )}
-      </ul>
-    </div>
-  );
+  return{ users, handleRefresh }
 };
  
-export default App;
