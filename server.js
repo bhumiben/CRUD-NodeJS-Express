@@ -1,77 +1,119 @@
 const express = require('express');
-const fs = require('fs').promises; // Using fs.promises for Promise-based file operations
-const path = require('path');
-const { readFile, writeFile, deleteFile } = require('./fileoperations'); // Assuming fileoperations.js contains promise-based file operations
+const bodyParser = require('body-parser');
+const { MongoClient } = require('mongodb');
 
+// Create an Express application
 const app = express();
-var cors = require('cors')
-
 const port = 3000;
 
-// Middleware to parse JSON request bodies
-app.use(express.json());
-app.use(cors())
+// MongoDB connection 
+const mongoUrl = 'mongodb://localhost:27017';
+const dbName = 'miniproject7';
 
-// Define the path to the user data file
-const userDataFilePath = path.join(__dirname, 'users.json');
+app.use(bodyParser.json());
 
-// Middleware to log requests
-app.use((req, res, next) => {
-  console.log(`${req.method} request for ${req.url}`);
-  next();
-
+app.get('/api/users', async (req, res) => {
+try {
+const data = await readUserData();
+sendJSONResponse(res, 200, data);
+} catch (error) {
+sendResponse(res, 500, 'text/plain', 'Internal Server Error');
+}
 });
 
-// Define routes and handlers using Async/Await and Promises
-app.get('/', cors(), async (req, res) => {
-  res.json({msg: 'This is CORS-enabled for all origins!'})
-  
+// Define route for creating a new user
+app.post('/api/users', async (req, res) => {
+const newUser = req.body;
+try {
+const data = await readUserData();
+data.push(newUser);
+await writeUserData(data);
+sendResponse(res, 201, 'text/plain', 'User created successfully');
+} catch (error) {
+sendResponse(res, 400, 'text/plain', 'Invalid JSON format');
+}
 });
 
 
-  app.get('/api/v1/users', cors(), async (req, res) => {
-    try {
-      const data = await fs.readFile(userDataFilePath, 'utf8');
-      console.log(data); // Logging the data
-      res.status(200).json(JSON.parse(data));
-    } catch (error) {
-      console.error('Error reading or parsing JSON file:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
-  
-  
-app.post('/api/v1/users', cors(), async (req, res) => {
-
-
-  const newUser = req.body;
-  try {
-    await writeFile(userDataFilePath, JSON.stringify(newUser));
-    res.status(201).json(newUser);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
+// Define route for updating a user
+app.put('/api/users/:userId', async (req, res) => {
+const userId = req.params.userId;
+const updatedUser = req.body;
+try {
+const data = await readUserData();
+const userIndex = data.findIndex((user) => user.id === userId);
+if (userIndex === -1) {
+sendResponse(res, 404, 'text/plain', 'User not found');
+} else {
+data[userIndex] = { ...data[userIndex], ...updatedUser };
+await writeUserData(data);
+sendResponse(res, 200, 'text/plain', 'User updated successfully');
+}
+} catch (error) {
+sendResponse(res, 400, 'text/plain', 'Invalid JSON format');
+}
 });
 
-app.delete('/api/v1/users', cors(), async (req, res) => {
-
-
-  try {
-    await deleteFile(userDataFilePath);
-    res.status(204).end();
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
+// Define route for deleting a user
+app.delete('/api/users/:userId', async (req, res) => {
+const userId = req.params.userId;
+try {
+const data = await readUserData();
+const userIndex = data.findIndex((user) => user.id === userId);
+if (userIndex === -1) {
+sendResponse(res, 404, 'text/plain', 'User not found');
+} else {
+data.splice(userIndex, 1);
+await writeUserData(data);
+sendResponse(res, 200, 'text/plain', 'User deleted successfully');
+}
+} catch (error) {
+sendResponse(res, 500, 'text/plain', 'Internal Server Error');
+}
 });
 
-// Handle unsupported routes
-app.use((req, res) => {
-  res.status(404).send('Not Found');
-});
 
-// Start the server
+// Function to read user data from the MongoDB database
+async function readUserData() {
+const client = new MongoClient(mongoUrl);
+try {
+await client.connect();
+const db = client.db(dbName);
+const usersCollection = db.collection('users');
+const userData = await usersCollection.find({}).toArray();
+return userData;
+} catch (error) {
+throw error;
+} finally {
+client.close();
+}
+}
+
+// Function to write user data to the MongoDB database
+async function writeUserData(userData) {
+const client = new MongoClient(mongoUrl);
+try {
+await client.connect();
+const db = client.db(dbName);
+const usersCollection = db.collection('users');
+await usersCollection.deleteMany({});
+await usersCollection.insertMany(userData);
+} catch (error) {
+throw error;
+} finally {
+client.close();
+}
+}
+
+function sendResponse(res, status, contentType, data) {
+res.writeHead(status, { 'Content-Type': contentType });
+res.end(data);
+}
+
+function sendJSONResponse(res, status, data) {
+sendResponse(res, status, 'application/json', JSON.stringify(data));
+}
+
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+console.log(`Server running on http://localhost:${port}/`);
 });
