@@ -1,8 +1,8 @@
 import React from 'react';
-import {useApp} from './App2.js';
+import {App} from './App.js';
 
-function App() {
-    const{users, handleRefresh} = useApp();
+function AppWrapper() {
+    const{users, handleRefresh} = App();
 return(
     <div>
       <h1>User List</h1>
@@ -19,5 +19,5 @@ return(
     </div>
   )};
 
-  export default App;
+  export default AppWrapper;
 
