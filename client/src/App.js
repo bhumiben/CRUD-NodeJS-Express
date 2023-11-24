@@ -1,6 +1,6 @@
 import  { useState, useEffect } from 'react';
 import axios from 'axios';
- 
+import AddUserComponent from './AddUserComponent';
 // Functional component
 export const App = () => {
   const [users, setUsers] = useState([]); // State for users
@@ -29,6 +29,19 @@ export const App = () => {
       });
   };
  
-  return{ users, handleRefresh }
+  return (
+    <div>
+      <h1>User List</h1>
+      <AddUserComponent /> {/* Include the new component */}
+      <ul>
+        {users.map((user) => (
+          <li key={user._id}>{user.name}</li>
+        ))}
+      </ul>
+      <button onClick={handleRefresh}>Refresh Users</button>
+    </div>
+  );
 };
+
+
  

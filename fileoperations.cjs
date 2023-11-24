@@ -1,6 +1,6 @@
-const fs = require('fs');
+import fs from 'fs';
 
-// Function to handle file read operations
+
 function readFile(filePath, callback) {
   fs.readFile(filePath, 'utf8', (error, data) => {
     if (error) {
@@ -11,7 +11,7 @@ function readFile(filePath, callback) {
   });
 }
 
-// Function to handle file write operations
+
 function writeFile(filePath, data, callback) {
   fs.writeFile(filePath, data, (err) => {
     if (err) {
@@ -23,7 +23,7 @@ function writeFile(filePath, data, callback) {
   });
 }
 
-// Function to handle file deletion
+cd 
 function deleteFile(filePath, callback) {
   fs.unlink(filePath, (err) => {
     if (err) {
